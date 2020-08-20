@@ -1,8 +1,8 @@
 const axios = require('axios').default;
 const parseString = require('xml2js').parseString;
 
-var sqlite3 = require('sqlite3');
-var db = new sqlite3.Database('./database.sqlite');
+const sqlite3 = require('sqlite3');
+const db = new sqlite3.Database('database.sqlite');
 
 const seedDatabase = () => {
 	axios

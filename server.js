@@ -3,7 +3,6 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const path = require('path');
 const errorhandler = require('errorhandler');
-const morgan = require('morgan');
 
 const app = express();
 app.use(bodyParser.json());
@@ -19,7 +18,6 @@ app.get('*', (req, res) => {
 const apiRouter = require('./api/api');
 app.use('/api', apiRouter);
 
-// app.use(morgan('dev'))
 
 app.use(errorhandler());
 
