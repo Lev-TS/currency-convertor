@@ -92,7 +92,8 @@ const seedDatabase = () => {
 		'id INTEGER PRIMARY KEY AUTOINCREMENT,' +
 		'user_id TEXT NOT NULL,' +
 		'conversion_amount TEXT NOT NULL,' +
-		'conversion_currency TEXT NOT NULL,' +
+		'converted_from TEXT NOT NULL,' +
+		'converted_to TEXT NOT NULL,' +
 		'timestamp TEXT NOT NULL)';
 
 	db.run(sqlCreateLogTable, (error) =>
