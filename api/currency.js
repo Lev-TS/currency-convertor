@@ -50,23 +50,23 @@ currencyRouter.post('/convert', (req, res, next) => {
 			}
 
 			db.get(sqlFetchFxRate, values, (error, data) => {
-				error ? res.sendStatus(404) : res.status(200).json({ data });
+				error ? res.sendStatus(404) : res.status(200).json({ selectedCurrencyDetails: data });
 			});
 		}
 	});
 });
 
-// currencyRouter.get('/list_of_currencies', (req, res, next) => {
-// 	db.all(
-// 		'SELECT * FROM Employee WHERE Employee.is_current_employee = 1',
-// 		(error, data) => {
-// 			if (error) {
-// 				next(error);
-// 			} else {
-// 				res.status(200).json({ data });
-// 			}
-// 		}
-// 	);
-// });
+currencyRouter.get('/list', (req, res, next) => {
+	db.all(
+		'SELECT currencies.currency_name, currencies.iso_code FROM currencies JOIN rates ON currencies.iso_code = rates.iso_code',
+		(error, data) => {
+			if (error) {
+				next(error);
+			} else {
+				res.status(200).json({ listOfCurrencies: data });
+			}
+		}
+	);
+});
 
 module.exports = currencyRouter;

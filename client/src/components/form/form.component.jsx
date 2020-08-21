@@ -1,24 +1,27 @@
 import React from 'react';
 import './form.styles.scss';
-import { useRef } from 'react';
 
 class Form extends React.Component {
 	constructor(props) {
 		super(props);
 
 		this.state = {
-			currencyList: [],
+			listOfCurrencies: [],
 		};
 	}
 
-	// componentDidMount(){
-	//     fetch('/api/currency/list_of_currencies')
-	// }
+	componentDidMount() {
+		fetch('/api/currency/list')
+			.then((response) => response.json())
+			.then(({ listOfCurrencies }) =>
+				this.setState({ listOfCurrencies: listOfCurrencies })
+			);
+	}
 
 	render() {
 		const {
-            conversionAmount,
-            isInvertedConversion,
+			conversionAmount,
+			isInvertedConversion,
 			selectedCurrency,
 			handleSubmit,
 			handleConversionAmountInput,
@@ -26,47 +29,70 @@ class Form extends React.Component {
 			handleConversionInvertion,
 		} = this.props;
 
-		const { currencyList, isInvertedConvertation } = this.state;
-		const convertFrom = (
-			<select name={selectedCurrency}>
-				<option value="EUR">EUR: Euro</option>
-			</select>
-		);
+		const { listOfCurrencies } = this.state;
+
+		const convertFrom = <span className="input-field euro">EUR: Euro</span>;
 
 		const convertTo = (
 			<select
 				value={selectedCurrency}
 				onChange={handleCurrencySelection}
-				placeholder="Please Choose"
+				className="input-field"
 				required
 			>
-				<option value="USD">USD: US Dollar</option>
-				<option value="GEL">GEL: Georgian Lari</option>
+				{listOfCurrencies.map((currency) => (
+					<option key={currency.iso_code} value={currency.iso_code}>
+						{currency.iso_code}: {currency.currency_name}
+					</option>
+				))}
 			</select>
 		);
 
 		return (
 			<div className="form">
 				<form onSubmit={handleSubmit} method="POST">
-					<label>
-						Amount
+					<div className="input-group">
+						<span className="label">Amount</span>
 						<input
 							type="text"
 							value={conversionAmount}
 							onChange={handleConversionAmountInput}
+							className="input-field"
+							placeholder="Please enter amount"
 							required
 						/>
-					</label>
-					<label>
-						From
-						{!isInvertedConversion ? convertFrom : convertTo}
-					</label>
-					<button onClick={handleConversionInvertion}>&#8646;</button>
-					<label>
-						To
+					</div>
+					<div
+						className="input-group"
+						style={
+							isInvertedConversion
+								? { opacity: 1 }
+								: { opacity: 0.6 }
+						}
+					>
+						<span className="label">From</span>
+						{isInvertedConversion ? convertTo : convertFrom}
+					</div>
+					<button
+						onClick={handleConversionInvertion}
+						className="invert-button"
+					>
+						&#8644;
+					</button>
+					<div
+						className="input-group"
+						style={
+							isInvertedConversion
+								? { opacity: 0.6 }
+								: { opacity: 1 }
+						}
+					>
+						<span className="label">To</span>
 						{isInvertedConversion ? convertFrom : convertTo}
-					</label>
-					<button type="submit">&#10095;</button>
+					</div>
+					<button type="submit" className="submit-button">
+						&#10095;
+					</button>
 				</form>
 			</div>
 		);

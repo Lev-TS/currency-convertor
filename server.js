@@ -11,9 +11,9 @@ app.use(cors());
 // Serve the static files from the CRA
 app.use(express.static(path.join(__dirname, 'client/build')));
 // Handle any requests that don't match the api routes
-app.get('*', (req, res) => {
-	res.sendFile(path.join(__dirname, 'client/build/index.html'));
-});
+// app.get('*', (req, res) => {
+// 	res.sendFile(path.join(__dirname, 'client/build/index.html'));
+// });
 
 const apiRouter = require('./api/api');
 app.use('/api', apiRouter);

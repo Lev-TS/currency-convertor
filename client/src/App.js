@@ -51,7 +51,7 @@ class App extends React.Component {
 			},
 		})
 			.then((response) => response.json())
-			.then(({ data: { exchange_rate, last_updated, iso_code } }) => {
+			.then(({ selectedCurrencyDetails: { exchange_rate, last_updated, iso_code } }) => {
 				const convertedAmount = isInvertedConversion ? (conversionAmount / exchange_rate).toFixed(2) : (conversionAmount * exchange_rate).toFixed(2)
 
 				this.setState({
