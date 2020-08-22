@@ -1,28 +1,59 @@
 import React from 'react';
 import './App.css';
 
-import Form from './components/form/form.component.jsx';
+import { v4 as uuidv4 } from 'uuid';
+
+import Form from './components/form/form.component';
+import Results from './components/results/results.component';
+import Attribution from './components/attribution/attribution.component'
 
 class App extends React.Component {
 	constructor(props) {
 		super(props);
 
 		this.state = {
-			userId: 'dev',
-			selectedCurrency: 'GEL',
-			conversionAmount: '',
-
 			isInvertedConversion: false,
 
+			// data sent
+			userId: '',
+			selectedCurrency: 'AED',
+			conversionAmount: '',
+			convertedFrom: 'EUR',
+			convertedTo: 'AED',
+
+			// data received
 			exchangeRate: '',
 			lastUpdated: '',
+			previousConversionAmount: '',
+			previousConvertedFrom: '',
+			previousConvertedTo: '',
+
+			// data computed based on data received
 			convertedAmount: '',
-			currencyAbbreviation: '',
 		};
 	}
 
 	handleCurrencySelection = (event) => {
-		this.setState({ selectedCurrency: event.target.value });
+		const convertedFrom = !this.state.isInvertedConversion
+			? 'EUR'
+			: event.target.value;
+		const convertedTo = this.state.isInvertedConversion
+			? 'EUR'
+			: event.target.value;
+
+		this.setState({
+			selectedCurrency: event.target.value,
+			convertedFrom: convertedFrom,
+			convertedTo: convertedTo,
+		});
+	};
+
+	handleConversionInvertion = (event) => {
+		this.setState((prevState) => ({
+			isInvertedConversion: !prevState.isInvertedConversion,
+			convertedFrom: prevState.convertedTo,
+			convertedTo: prevState.convertedFrom,
+		}));
 	};
 
 	handleConversionAmountInput = (event) => {
@@ -35,7 +66,14 @@ class App extends React.Component {
 	handleSubmit = (event) => {
 		event.preventDefault();
 
-		const { userId, selectedCurrency, conversionAmount, isInvertedConversion } = this.state;
+		const {
+			userId,
+			selectedCurrency,
+			conversionAmount,
+			convertedFrom,
+			convertedTo,
+			isInvertedConversion,
+		} = this.state;
 
 		fetch('/api/currency/convert', {
 			method: 'POST',
@@ -43,7 +81,8 @@ class App extends React.Component {
 				userId,
 				selectedCurrency,
 				conversionAmount,
-				isInvertedConversion
+				convertedFrom,
+				convertedTo,
 			}),
 			headers: {
 				Accept: 'application/json',
@@ -51,14 +90,18 @@ class App extends React.Component {
 			},
 		})
 			.then((response) => response.json())
-			.then(({ selectedCurrencyDetails: { exchange_rate, last_updated, iso_code } }) => {
-				const convertedAmount = isInvertedConversion ? (conversionAmount / exchange_rate).toFixed(2) : (conversionAmount * exchange_rate).toFixed(2)
+			.then(({ selectedCurrencyDetails, log }) => {
+				const convertedAmount = isInvertedConversion
+					? conversionAmount / selectedCurrencyDetails.exchange_rate
+					: conversionAmount * selectedCurrencyDetails.exchange_rate;
 
 				this.setState({
-					exchangeRate: exchange_rate,
-					lastUpdated: last_updated,
-					currencyAbbreviation: iso_code,
-					convertedAmount
+					exchangeRate: selectedCurrencyDetails.exchange_rate,
+					lastUpdated: selectedCurrencyDetails.last_updated,
+					convertedAmount,
+					previousConversionAmount: log.conversionAmount,
+					previousConvertedFrom: log.convertedFrom,
+					previousConvertedTo: log.convertedTo,
 				});
 			})
 			.catch((error) => {
@@ -67,25 +110,34 @@ class App extends React.Component {
 			});
 	};
 
-	handleConversionInvertion = (event) => {
-		this.state.isInvertedConversion
-			? this.setState({ isInvertedConversion: false })
-			: this.setState({ isInvertedConversion: true });
-	};
-
+	// get existing userId if exists or created a newUser 
+	componentDidMount() {
+		const isExistingUser = JSON.parse(window.localStorage.getItem('user'))
+		if (isExistingUser) {
+			this.setState({userId: isExistingUser.id})
+		} else {
+			const newUser = {id: uuidv4()};
+			window.localStorage.setItem('user', JSON.stringify(newUser))
+			this.setState({userId: newUser.id});
+		}
+	}
+	
+	// reset exchangeRate to unsure that inverted conversion gets logged.
 	componentWillUnmount() {
 		this.setState({ exchangeRate: '' });
 	}
 
 	render() {
 		const {
-			userId,
 			selectedCurrency,
-			exchangeRate,
 			conversionAmount,
-			convertedAmount,
-			currencyAbbreviation,
 			isInvertedConversion,
+			exchangeRate,
+			lastUpdated,
+			previousConversionAmount,
+			previousConvertedFrom,
+			previousConvertedTo,
+			convertedAmount,
 		} = this.state;
 
 		return (
@@ -95,16 +147,21 @@ class App extends React.Component {
 					selectedCurrency={selectedCurrency}
 					isInvertedConversion={isInvertedConversion}
 					handleSubmit={this.handleSubmit}
-					handleConversionAmountInput={this.handleConversionAmountInput}
+					handleConversionAmountInput={
+						this.handleConversionAmountInput
+					}
 					handleCurrencySelection={this.handleCurrencySelection}
 					handleConversionInvertion={this.handleConversionInvertion}
 				/>
-
-				<div className="result">
-					<span>
-						{convertedAmount}
-					</span>
-				</div>
+				<Results
+					exchangeRate={Number(exchangeRate)}
+					lastUpdated={lastUpdated}
+					previousConversionAmount={Number(previousConversionAmount)}
+					previousConvertedFrom={previousConvertedFrom}
+					previousConvertedTo={previousConvertedTo}
+					convertedAmount={Number(convertedAmount)}
+				/>
+				<Attribution />
 			</div>
 		);
 	}

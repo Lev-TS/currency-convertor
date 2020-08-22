@@ -73,12 +73,12 @@ class Form extends React.Component {
 						<span className="label">From</span>
 						{isInvertedConversion ? convertTo : convertFrom}
 					</div>
-					<button
+					<div
 						onClick={handleConversionInvertion}
 						className="invert-button"
 					>
 						&#8644;
-					</button>
+					</div>
 					<div
 						className="input-group"
 						style={

@@ -1,0 +1,31 @@
+.attribution {
+	min-width: 200px;
+	height: 34px;
+	padding-top: 10px;
+	font-size: 13px;
+	text-align: center;
+	background-color: #282a36;
+	color: white;
+
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	right: 0;
+
+	span {
+		a {
+			&:link {
+				color: #ff5555;
+				text-decoration: none;
+			}
+
+			&:hover {
+				text-decoration: underline;
+			}
+
+			&:visited {
+				color: #ff5555;
+			}
+		}
+	}
+}
