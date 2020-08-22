@@ -15,10 +15,10 @@
     "axios": "^0.19.2",
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",
+    "cron": "^1.8.2",
     "errorhandler": "^1.5.1",
     "express": "^4.17.1",
     "sqlite3": "^5.0.0",
-    "uuid": "^8.3.0",
     "xml2js": "^0.4.23"
   },
   "devDependencies": {

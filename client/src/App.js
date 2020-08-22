@@ -110,7 +110,7 @@ class App extends React.Component {
 			});
 	};
 
-	// get existing userId if exists or created a newUser 
+	// get existing userId if exists or create a newUser 
 	componentDidMount() {
 		const isExistingUser = JSON.parse(window.localStorage.getItem('user'))
 		if (isExistingUser) {
