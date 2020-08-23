@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import Form from './components/form/form.component';
 import Results from './components/results/results.component';
-import Attribution from './components/attribution/attribution.component'
+import Attribution from './components/attribution/attribution.component';
 
 class App extends React.Component {
 	constructor(props) {
@@ -16,10 +16,10 @@ class App extends React.Component {
 
 			// data sent
 			userId: '',
-			selectedCurrency: 'AED',
+			selectedCurrency: 'GEL',
 			conversionAmount: '',
 			convertedFrom: 'EUR',
-			convertedTo: 'AED',
+			convertedTo: 'GEL',
 
 			// data received
 			exchangeRate: '',
@@ -90,7 +90,7 @@ class App extends React.Component {
 			},
 		})
 			.then((response) => response.json())
-			.then(({ selectedCurrencyDetails, log }) => {
+			.then(({ selectedCurrencyDetails, lastActivity }) => {
 				const convertedAmount = isInvertedConversion
 					? conversionAmount / selectedCurrencyDetails.exchange_rate
 					: conversionAmount * selectedCurrencyDetails.exchange_rate;
@@ -98,10 +98,10 @@ class App extends React.Component {
 				this.setState({
 					exchangeRate: selectedCurrencyDetails.exchange_rate,
 					lastUpdated: selectedCurrencyDetails.last_updated,
+					previousConversionAmount: lastActivity.conversion_amount,
+					previousConvertedFrom: lastActivity.converted_from,
+					previousConvertedTo: lastActivity.converted_to,
 					convertedAmount,
-					previousConversionAmount: log.conversionAmount,
-					previousConvertedFrom: log.convertedFrom,
-					previousConvertedTo: log.convertedTo,
 				});
 			})
 			.catch((error) => {
@@ -110,18 +110,18 @@ class App extends React.Component {
 			});
 	};
 
-	// get existing userId if exists or create a newUser 
+	// get existing userId if exists or create a newUser
 	componentDidMount() {
-		const isExistingUser = JSON.parse(window.localStorage.getItem('user'))
+		const isExistingUser = JSON.parse(window.localStorage.getItem('user'));
 		if (isExistingUser) {
-			this.setState({userId: isExistingUser.id})
+			this.setState({ userId: isExistingUser.id });
 		} else {
-			const newUser = {id: uuidv4()};
-			window.localStorage.setItem('user', JSON.stringify(newUser))
-			this.setState({userId: newUser.id});
+			const newUser = { id: uuidv4() };
+			window.localStorage.setItem('user', JSON.stringify(newUser));
+			this.setState({ userId: newUser.id });
 		}
 	}
-	
+
 	// reset exchangeRate to unsure that inverted conversion gets logged.
 	componentWillUnmount() {
 		this.setState({ exchangeRate: '' });
@@ -156,7 +156,7 @@ class App extends React.Component {
 				<Results
 					exchangeRate={Number(exchangeRate)}
 					lastUpdated={lastUpdated}
-					previousConversionAmount={Number(previousConversionAmount)}
+					previousConversionAmount={previousConversionAmount}
 					previousConvertedFrom={previousConvertedFrom}
 					previousConvertedTo={previousConvertedTo}
 					convertedAmount={Number(convertedAmount)}

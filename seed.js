@@ -43,7 +43,6 @@ const seedDatabase = () => {
 					});
 				}
 			});
-			console.log('Table "rates" is available and seeded');
 		})
 		.catch((error) => console.log(error));
 
@@ -81,7 +80,6 @@ const seedDatabase = () => {
 							);
 						});
 					});
-					console.log('Table "currencies" is available and seeded');
 				}
 			});
 		})
@@ -97,10 +95,10 @@ const seedDatabase = () => {
 		'timestamp TEXT NOT NULL)';
 
 	db.run(sqlCreateLogTable, (error) =>
-		error
-			? console.log(error)
-			: console.log('Table "log" is available but not seeded')
+		error ? console.log(error) : null
 	);
 };
+
+seedDatabase();
 
 module.exports = seedDatabase;

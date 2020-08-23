@@ -9,7 +9,8 @@ const Results = ({
 	previousConvertedTo,
 	convertedAmount
 }) => {
-	const formatNumber = (number) => {
+	const formatNumber = (value) => {
+		const number = value * 1;
 		const expo = 100000000000000 - 1;
 		if (number >= expo) {
 			return number.toExponential(5);

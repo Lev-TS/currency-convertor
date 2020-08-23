@@ -5,16 +5,14 @@ const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
 const db = new sqlite3.Database(path.join(__dirname, '../database.sqlite'));
 
-//handle conversion request
+// handle request for exchange rate and log activity
 currencyRouter.post('/convert', (req, res, next) => {
+	console.log('post request received');
 	const {
 		userId,
 		conversionAmount,
 		convertedFrom,
 		convertedTo,
-
-		// the bank API provides only euro rates, this
-		// should be refactored if the api has all rates.
 		selectedCurrency,
 	} = req.body;
 
@@ -28,11 +26,9 @@ currencyRouter.post('/convert', (req, res, next) => {
 		return res.sendStatus(400);
 	}
 
-	// Log activity
 	const sqlLogActivity =
 		'INSERT INTO log (user_id, conversion_amount, converted_from, converted_to, timestamp)' +
 		'VALUES ($userId, $conversionAmount, $convertedFrom, $convertedTo, $timeStamp)';
-
 	const placeholdersToLogActivity = {
 		$userId: userId,
 		$conversionAmount: conversionAmount,
@@ -41,39 +37,38 @@ currencyRouter.post('/convert', (req, res, next) => {
 		$timeStamp: Date.now(),
 	};
 
-	db.run(sqlLogActivity, placeholdersToLogActivity, (error) => {
+	db.run(sqlLogActivity, placeholdersToLogActivity, function (error) {
 		if (error) {
 			next(error);
 		} else {
-			console.log('user activity logged');
+			db.get(
+				`SELECT * FROM log WHERE log.id = ${this.lastID}`,
+				(error, retrivedActivity) => {
+					if (error) {
+						next(error)
+					} else {
+						const lastActivity = retrivedActivity;
+						const sqlFetchFxRate = 'SELECT exchange_rate, last_updated FROM rates WHERE rates.iso_code = $selectedCurrency';
+						const placeholdersToFetchData = {$selectedCurrency: selectedCurrency};
+						db.get(
+							sqlFetchFxRate,
+							placeholdersToFetchData,
+							(error, selectedCurrencyDetails) => {
+								error
+									? res.sendStatus(404)
+									: res.status(200).json({ selectedCurrencyDetails, lastActivity });
+							}
+						);
+					}
+				}
+			);
 		}
-	});
-
-	// fetch and send data
-	const sqlFetchFxRate =
-		'SELECT * FROM rates WHERE rates.iso_code = $selectedCurrency';
-
-	const placeholdersToFetchData = {
-		$selectedCurrency: selectedCurrency,
-	};
-
-	db.get(sqlFetchFxRate, placeholdersToFetchData, (error, data) => {
-		error
-			? res.sendStatus(404)
-			: res.status(200).json({
-					selectedCurrencyDetails: data,
-					log: {
-						userId: userId,
-						conversionAmount: conversionAmount,
-						convertedFrom: convertedFrom,
-						convertedTo: convertedTo,
-					},
-			  });
 	});
 });
 
-// handle request for available currencies
+// handle request for available currencies names;
 currencyRouter.get('/list', (req, res, next) => {
+	console.log('post request received');
 	db.all(
 		'SELECT currencies.currency_name, currencies.iso_code FROM currencies JOIN rates ON currencies.iso_code = rates.iso_code',
 		(error, data) => {
