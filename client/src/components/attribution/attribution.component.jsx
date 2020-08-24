@@ -3,7 +3,7 @@ import './attribution.styles.scss';
 
 const Attribution = () => (
 	<div className="attribution">
-		<span>2020 &#169; .coded by <a href="https://levan-portfolio.herokuapp.com/">Lev-TS</a></span>
+		<span>Powered by the Bank of Lithuania | 2020 &#169; <a href="https://levan-portfolio.herokuapp.com/">Lev-TS</a></span>
 	</div>
 );
 

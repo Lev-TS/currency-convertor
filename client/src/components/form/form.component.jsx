@@ -40,7 +40,7 @@ class Form extends React.Component {
 				className="input-field"
 				required
 			>
-				<option value='' disabled selected>Choose a currency</option>
+				<option value='' disabled>Choose a currency</option>
 				{listOfCurrencies.map((currency) => (
 					<option key={currency.iso_code} value={currency.iso_code}>
 						{currency.iso_code}: {currency.currency_name}

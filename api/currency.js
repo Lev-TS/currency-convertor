@@ -3,7 +3,9 @@ const currencyRouter = express.Router();
 const path = require('path');
 
 const sqlite3 = require('sqlite3').verbose();
-const db = new sqlite3.Database(path.join(__dirname, '../database.sqlite'));
+const db = new sqlite3.Database(
+	process.env.TEST_DATABASE || path.join(__dirname, '../database.sqlite')
+);
 
 // handle request for exchange rate and log activity
 currencyRouter.post('/convert', (req, res, next) => {
@@ -44,18 +46,26 @@ currencyRouter.post('/convert', (req, res, next) => {
 				`SELECT * FROM log WHERE log.id = ${this.lastID}`,
 				(error, retrivedActivity) => {
 					if (error) {
-						next(error)
+						next(error);
 					} else {
 						const lastActivity = retrivedActivity;
-						const sqlFetchFxRate = 'SELECT exchange_rate, last_updated FROM rates WHERE rates.iso_code = $selectedCurrency';
-						const placeholdersToFetchData = {$selectedCurrency: selectedCurrency};
+						const sqlFetchFxRate =
+							'SELECT exchange_rate, last_updated FROM rates WHERE rates.iso_code = $selectedCurrency';
+						const placeholdersToFetchData = {
+							$selectedCurrency: selectedCurrency,
+						};
 						db.get(
 							sqlFetchFxRate,
 							placeholdersToFetchData,
 							(error, selectedCurrencyDetails) => {
 								error
-									? res.sendStatus(404)
-									: res.status(200).json({ selectedCurrencyDetails, lastActivity });
+									? res.sendStatus(400)
+									: res
+											.status(200)
+											.json({
+												selectedCurrencyDetails,
+												lastActivity,
+											});
 							}
 						);
 					}

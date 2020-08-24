@@ -99,6 +99,7 @@ const seedDatabase = () => {
 	);
 };
 
+// This is for Heroku deployment
 seedDatabase();
 
 module.exports = seedDatabase;

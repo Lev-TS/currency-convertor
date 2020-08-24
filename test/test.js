@@ -1,10 +1,15 @@
+process.env.PORT = 8081;
+process.env.TEST_DATABASE = './test/test.sqlite';
+
 const expect = require('chai').expect;
 const request = require('supertest');
 const sqlite3 = require('sqlite3');
 
 const app = require('../server');
+const utils = require('./test.utils');
 
 const prodDb = new sqlite3.Database('./database.sqlite');
+const testDb = new sqlite3.Database(process.env.TEST_DATABASE);
 
 // Model tests
 describe("Table 'rates'", function () {
@@ -196,61 +201,114 @@ describe("Table 'log'", function () {
 
 // Server tests
 describe('GET /api/currency/list', function () {
-	it('should return all currency names that exist in rates table', function () {
-		let ratesArrLength;
-		before(function (done) {
-			prodDb.all('SELECT iso_code FROM rates', (error, rates) => {
-				ratesArrLength = rates.length;
-				done();
+	let ratesArrLength;
+
+	beforeEach(function (done) {
+		testDb.serialize(function () {
+			testDb.run(utils.sqlCreateLogTable);
+			testDb.run(utils.sqlCreateRatesTable);
+			testDb.run(utils.sqlCreateCurrenciesTable, () => {
+				testDb.all('SELECT iso_code FROM rates', (error, rates) => {
+					ratesArrLength = rates.length;
+					done();
+				});
 			});
 		});
+	});
 
+	it('should return all currency names that exist in rates table', function () {
 		return request(app)
 			.get('/api/currency/list')
 			.then(function (response) {
-				const currenciesArrLength = response.body.length;
+				const currenciesArrLength =
+					response.body.listOfCurrencies.length;
 				expect(ratesArrLength).to.equal(currenciesArrLength);
 			});
 	});
 
-	it('should return a status code of 200', function () {
+	it('should return a status code of 200 after successfully serving the request', function () {
 		return request(app).get('/api/currency/list').expect(200);
 	});
 });
 
-describe('post /api/currency/currency', function () {
+describe('POST /api/currency/convert', function () {
 	let newActivity;
 
-	beforeEach(function () {
+	beforeEach(function (done) {
+		utils.createTestTables(done)
 		newActivity = {
-			userId: "test",
-			selectedCurrency: "GEL",
-			conversionAmount: "3213413",
-			convertedFrom: "GEL",
-			convertedTo: "EUR"
-		}
+			userId: 'test',
+			// REMEMBER: selectedCurrency is not logged by design
+			selectedCurrency: 'GEL',
+			conversionAmount: '100',
+			convertedFrom: 'GEL',
+			convertedTo: 'EUR',
+		};
+	});
+
+	it('should create a new user activity log', function () {
+		return request(app)
+			.post('/api/currency/convert')
+			.send(newActivity)
+			.then(function () {
+				testDb.all(
+					'SELECT * FROM log',
+					function (error, result) {
+						const retrivedLog = result.find(log => log.user_id === newActivity.userId);
+						expect(retrivedLog).to.exist;
+						expect(retrivedLog.user_id).to.equal(newActivity.userId);
+						expect(retrivedLog.conversion_amount).to.equal(newActivity.conversionAmount)
+						expect(retrivedLog.converted_from).to.equal(newActivity.convertedFrom)
+						expect(retrivedLog.converted_to).to.equal(newActivity.convertedTo)
+					}
+				);
+			});
+	});
+
+	it('should return the newly created user activity log', function () {
+		return request(app)
+			.post('/api/currency/convert')
+			.send(newActivity)
+			.then(function (response) {
+				const returnedLog = response.body.lastActivity
+				expect(returnedLog).to.exist;
+				expect(returnedLog.id).to.exist;
+				expect(returnedLog.user_id).to.equal(newActivity.userId);
+				expect(returnedLog.conversion_amount).to.equal(newActivity.conversionAmount)
+				expect(returnedLog.converted_from).to.equal(newActivity.convertedFrom)
+				expect(returnedLog.converted_to).to.equal(newActivity.convertedTo)
+			})
 	})
 
-	// it('should create a new user activity log', function () {
-	// 	return request(app)
-	// 		.post('/api/currency/convert')
-	// 		.send({ newActivity })
-	// 		.then(function(response) {
-	// 			prodDb.all('SELECT * FROM log', function (error, result) {
-	// 				const userActivity = result;
-	// 			})
-				
-				
-	// 			const userActivity = response.body.newActivity;
-	// 			expect(userActivity).to.exist;
-	// 			expect(userActivity.id).to.exist;
+	it('should return selected currency details', function () {
+		return request(app)
+			.post('/api/currency/convert')
+			.send(newActivity)
+			.then(function (response) {
+				const returnedCurrencyDetials = response.body.selectedCurrencyDetails
+				expect(returnedCurrencyDetials).to.exist;
+				expect(returnedCurrencyDetials.exchange_rate).to.exist
+				expect(returnedCurrencyDetials.last_updated).to.exist
+			})
+	})
 
+	it('should return a status code of 400 for invalid currency request', function () {
+		return request(app)
+			.post('/api/currency/convert')
+			.send({
+				userId: 'test',
+				selectedCurrency: '',
+				conversionAmount: '100',
+				convertedFrom: 'GEL',
+				convertedTo: 'EUR',
+			})
+			.expect(400)
+	})
 
-	// 			expect(userActivity.userId).to.equal(newActivity.userId)
-	// 			expect(userActivity.userId).to.equal(newActivity.userId)
-	// 			expect(userActivity.userId).to.equal(newActivity.userId)
-	// 			expect(userActivity.userId).to.equal(newActivity.userId)
-	// 			expect(userActivity.userId).to.equal(newActivity.userId)
-	// 		})
-	// })
-})
+	it('should return a status code of 200 after successfully serving the request', function () {
+		return request(app)
+			.post(('/api/currency/convert'))
+			.send(newActivity)
+			.expect(200)
+	})
+});
