@@ -7,7 +7,6 @@ const db = new sqlite3.Database(path.join(__dirname, '../database.sqlite'));
 
 // handle request for exchange rate and log activity
 currencyRouter.post('/convert', (req, res, next) => {
-	console.log('post request received');
 	const {
 		userId,
 		conversionAmount,
@@ -68,7 +67,6 @@ currencyRouter.post('/convert', (req, res, next) => {
 
 // handle request for available currencies names;
 currencyRouter.get('/list', (req, res, next) => {
-	console.log('post request received');
 	db.all(
 		'SELECT currencies.currency_name, currencies.iso_code FROM currencies JOIN rates ON currencies.iso_code = rates.iso_code',
 		(error, data) => {

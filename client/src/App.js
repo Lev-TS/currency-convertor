@@ -16,10 +16,10 @@ class App extends React.Component {
 
 			// data sent
 			userId: '',
-			selectedCurrency: 'GEL',
+			selectedCurrency: '',
 			conversionAmount: '',
-			convertedFrom: 'EUR',
-			convertedTo: 'GEL',
+			convertedFrom: '',
+			convertedTo: '',
 
 			// data received
 			exchangeRate: '',
